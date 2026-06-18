@@ -31,7 +31,7 @@ function App() {
 
     try {
       // Send the file to our Node.js backend
-      const response = await axios.post('http://localhost:5000/api/upload-resume', formData, {
+      const response = await axios.post('https://resume-ai-backend.onrender.com/api/upload-resume', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       setResult(response.data.analysis);
