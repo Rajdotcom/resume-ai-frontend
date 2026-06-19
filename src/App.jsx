@@ -30,11 +30,31 @@ function App() {
     formData.append('jobDescription', jobDescription || "Looking for a software engineer.");
 
     try {
-      // Send the file to our Node.js backend
       const response = await axios.post('https://resume-ai-backend-wg2u.onrender.com/api/upload-resume', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-      setResult(response.data.analysis);
+      
+      // Extract the payload out of the backend data
+      const dataPayload = response.data.analysis;
+
+      if (dataPayload) {
+        // 🚀 THE TRANSLATION MAP: Rewrites keys to match frontend design patterns
+        setResult({
+          matchPercentage: dataPayload.suitabilityScore || 0,
+          summary: dataPayload.executiveSummary || "No overview summary provided.",
+          strengths: dataPayload.technicalStrengths || [],
+          weaknesses: dataPayload.operationalWeaknesses || [],
+          missingSkills: dataPayload.missingSkillsGaps || [],
+          hiringRecommendation: dataPayload.suitabilityScore >= 75 
+            ? "Strong Match Candidate" 
+            : dataPayload.suitabilityScore >= 45 
+            ? "Conditional Match Review" 
+            : "No Match Recommendation"
+        });
+      } else {
+        setError('The server processed the file but returned an empty structural payload.');
+      }
+
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to connect to the server.');
     } finally {
@@ -141,13 +161,13 @@ function App() {
                 <div className="bg-green-50 p-4 rounded-lg border border-green-100">
                   <h3 className="font-bold text-green-700 mb-2 flex items-center gap-2"><CheckCircle size={18}/> Strengths</h3>
                   <ul className="text-sm text-green-800 space-y-1 list-disc pl-4">
-                    {result.strengths.map((s, i) => <li key={i}>{s}</li>)}
+                    {result.strengths?.map((s, i) => <li key={i}>{s}</li>)}
                   </ul>
                 </div>
                 <div className="bg-red-50 p-4 rounded-lg border border-red-100">
                   <h3 className="font-bold text-red-700 mb-2 flex items-center gap-2"><XCircle size={18}/> Weaknesses</h3>
                   <ul className="text-sm text-red-800 space-y-1 list-disc pl-4">
-                    {result.weaknesses.map((w, i) => <li key={i}>{w}</li>)}
+                    {result.weaknesses?.map((w, i) => <li key={i}>{w}</li>)}
                   </ul>
                 </div>
               </div>
@@ -158,7 +178,7 @@ function App() {
                   <AlertCircle size={16}/> Missing Required Skills
                 </h3>
                 <div className="flex flex-wrap gap-2">
-                  {result.missingSkills.map((skill, i) => (
+                  {result.missingSkills?.map((skill, i) => (
                     <span key={i} className="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-sm font-medium border border-slate-200">
                       {skill}
                     </span>
@@ -170,8 +190,8 @@ function App() {
               <div className="mt-6 pt-6 border-t border-slate-100">
                 <span className="font-bold text-slate-700 mr-3">Recommendation:</span>
                 <span className={`px-4 py-1.5 rounded-full text-sm font-bold shadow-sm ${
-                  result.hiringRecommendation.includes('Strong') ? 'bg-green-500 text-white' : 
-                  result.hiringRecommendation.includes('No') ? 'bg-red-500 text-white' : 'bg-yellow-400 text-slate-900'
+                  result.hiringRecommendation?.includes('Strong') ? 'bg-green-500 text-white' : 
+                  result.hiringRecommendation?.includes('No') ? 'bg-red-500 text-white' : 'bg-yellow-400 text-slate-900'
                 }`}>
                   {result.hiringRecommendation}
                 </span>
